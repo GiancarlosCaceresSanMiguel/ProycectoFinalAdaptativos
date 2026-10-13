@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">EnergíaContexto</string>
+    <string name="notification_channel">Sesión activa</string>
+    <string name="notification_title">EnergíaContexto</string>
+    <string name="notification_text">Capturando GPS y batería</string>
+</resources>

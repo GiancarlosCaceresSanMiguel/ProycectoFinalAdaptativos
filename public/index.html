@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EnergíaContexto</title>
+<style>
+  :root {
+    --bg: #f5f6f8; --card: #ffffff; --text: #1c2430; --muted: #64707f; --line: #dde2e8;
+    --accent: #2563eb; --accent-text: #ffffff; --ok: #15803d; --warn: #b45309; --bad: #b91c1c;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #12161c; --card: #1c222b; --text: #e6e9ee; --muted: #94a0b0; --line: #2f3844;
+      --accent: #3b82f6; --ok: #4ade80; --warn: #fbbf24; --bad: #f87171;
+    }
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body { margin: 0; font: 15px/1.45 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background: var(--bg); color: var(--text); }
+  header { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 12px 16px; background: var(--card); border-bottom: 1px solid var(--line); }
+  h1 { font-size: 18px; margin: 0; }
+  h3 { margin: 18px 0 6px; font-size: 15px; }
+  .chip { font-size: 12px; padding: 3px 10px; border-radius: 99px; border: 1px solid var(--line); color: var(--muted); }
+  .chip.ok { color: var(--ok); border-color: var(--ok); }
+  .chip.warn { color: var(--warn); border-color: var(--warn); }
+  .tabs { display: flex; background: var(--card); border-bottom: 1px solid var(--line); }
+  .tab { flex: 1; padding: 11px; border: 0; background: none; color: var(--muted); font: inherit; border-bottom: 3px solid transparent; cursor: pointer; }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+  main { max-width: 760px; margin: 0 auto; padding: 12px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+  label { display: block; margin: 8px 0 2px; font-size: 13px; color: var(--muted); }
+  select, input[type=number] { width: 100%; padding: 9px; font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; }
+  .check { display: flex; align-items: center; gap: 8px; margin: 8px 0; color: var(--text); font-size: 14px; }
+  button { font: inherit; padding: 10px 16px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--text); cursor: pointer; }
+  button.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); font-weight: 600; }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  .row { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+  .row button { flex: 1; }
+  .hint { color: var(--muted); font-size: 13px; margin: 6px 0; }
+  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .m { background: var(--bg); border-radius: 10px; padding: 10px; }
+  .m span { display: block; font-size: 12px; color: var(--muted); }
+  .m b { font-size: 16px; }
+  .why { background: var(--bg); border-left: 4px solid var(--accent); border-radius: 6px; padding: 8px 10px; margin: 10px 0; }
+  canvas { width: 100%; height: 190px; display: block; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 6px 4px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; }
+  .verdict { border-radius: 8px; padding: 10px; margin: 10px 0; background: var(--bg); border-left: 4px solid var(--accent); }
+  .tablewrap { overflow-x: auto; }
+</style>
+</head>
+<body>
+<header>
+  <h1>⚡ EnergíaContexto</h1>
+  <span id="svc" class="chip">Listo</span>
+</header>
+<nav class="tabs">
+  <button class="tab active" data-tab="sesion">Sesión</button>
+  <button class="tab" data-tab="panel">Panel de resultados</button>
+</nav>
+
+<main>
+  <!-- ================= SESIÓN ================= -->
+  <section id="tab-sesion">
+    <div class="card">
+      <label for="profile">Perfil de servicio</label>
+      <select id="profile">
+        <option value="precision">Mayor precisión</option>
+        <option value="balance">Equilibrio</option>
+        <option value="saving">Ahorro</option>
+      </select>
+      <p class="hint" id="profileHelp"></p>
+
+      <label for="mode">Modo de funcionamiento</label>
+      <select id="mode">
+        <option value="adaptive">Adaptativo (predice y ajusta)</option>
+        <option value="fixed">Fijo (referencia para comparar)</option>
+      </select>
+
+      <label for="source">Fuente de datos</label>
+      <select id="source">
+        <option value="real">Real: batería y GPS de este dispositivo</option>
+        <option value="sim">Simulada (para probar sin esperar)</option>
+      </select>
+
+      <div id="simBox">
+        <label for="simSpeed">Velocidad de la simulación</label>
+        <select id="simSpeed">
+          <option value="1">1× (tiempo real)</option>
+          <option value="60">60× (1 minuto simulado = 1 segundo)</option>
+          <option value="600">600× (10 minutos simulados = 1 segundo)</option>
+        </select>
+        <label for="simStart">Batería inicial (%)</label>
+        <input type="number" id="simStart" min="5" max="100" value="90">
+      </div>
+
+      <div class="row">
+        <button class="primary" id="btnStart">Iniciar sesión</button>
+        <button id="btnStop" disabled>Detener</button>
+      </div>
+      <p class="hint" id="note"></p>
+    </div>
+
+    <!-- Controles de simulación (solo con sesión simulada) -->
+    <div class="card" id="simLive" hidden>
+      <b>Situación simulada</b>
+      <label for="simAct">Actividad del usuario</label>
+      <select id="simAct">
+        <option value="auto">Automática (cambia sola)</option>
+        <option value="reposo">Reposo</option>
+        <option value="caminata">Caminata</option>
+        <option value="desplazamiento">Desplazamiento (vehículo)</option>
+      </select>
+      <label class="check"><input type="checkbox" id="simOffline"> Sin conexión a internet</label>
+      <label class="check"><input type="checkbox" id="simCharging"> Teléfono cargando</label>
+      <label class="check"><input type="checkbox" id="simNear"> Cerca de una zona relevante</label>
+    </div>
+
+    <!-- Controles de sesión real -->
+    <div class="card" id="realLive" hidden>
+      <b>Zonas relevantes</b>
+      <p class="hint">Cerca de una zona (150 m) la app sube temporalmente la precisión. Zonas guardadas: <span id="zoneCount">0</span> (se guardan solo en este dispositivo).</p>
+      <div class="row">
+        <button id="btnZone">Marcar mi posición como zona</button>
+        <button id="btnClearZones">Borrar zonas</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="grid">
+        <div class="m"><span>Batería</span><b id="vBat">–</b></div>
+        <div class="m"><span>Bajada prevista (30 min)</span><b id="vPred">–</b></div>
+        <div class="m"><span>Frecuencia activa</span><b id="vPol">–</b></div>
+        <div class="m"><span>Actividad</span><b id="vAct">–</b></div>
+        <div class="m"><span>Consulta de GPS</span><b id="vGps">–</b></div>
+        <div class="m"><span>Envío por lotes</span><b id="vBatch">–</b></div>
+        <div class="m"><span>Pendientes de envío</span><b id="vQueue">–</b></div>
+        <div class="m"><span>Tiempo de sesión</span><b id="vTime">–</b></div>
+      </div>
+      <div class="why"><b>¿Por qué?</b> <span id="vWhy">Inicie una sesión para ver las decisiones del sistema.</span></div>
+      <canvas id="chart"></canvas>
+      <p class="hint">Azul: batería observada. Naranja: batería prevista dentro de 30 minutos.</p>
+    </div>
+  </section>
+
+  <!-- ================= PANEL ================= -->
+  <section id="tab-panel" hidden>
+    <div class="card">
+      <label for="fProfile">Filtrar resultados por perfil</label>
+      <select id="fProfile">
+        <option value="">Todos</option>
+        <option value="precision">Mayor precisión</option>
+        <option value="balance">Equilibrio</option>
+        <option value="saving">Ahorro</option>
+      </select>
+      <div class="row">
+        <button id="btnTrain">Reentrenar modelo</button>
+        <button id="btnReset">Borrar historial</button>
+      </div>
+    </div>
+    <div id="panelBody"><p class="hint">Cargando…</p></div>
+  </section>
+</main>
+
+<script src="shared.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
